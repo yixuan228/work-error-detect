@@ -6,6 +6,8 @@ def save_incremental_parquet(df, file_path):
         df = (
             pd.concat([prev, df], ignore_index=True)
             .drop_duplicates()
-            .sort_values(by='Date')
+            
         )
+        df['Date'] = pd.to_datetime(df['Date']).dt.date
+        df= df.sort_values(by='Date').reset_index(drop=True)
     df.to_parquet(file_path, index=False)

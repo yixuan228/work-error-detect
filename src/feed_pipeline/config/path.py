@@ -3,7 +3,7 @@
 from pathlib import Path
 
 # 项目根目录
-PATH_ROOT = Path(__file__).parent.parent.parent
+PATH_ROOT = Path(__file__).parent.parent.parent.parent
 
 # 日志目录
 PATH_LOG = PATH_ROOT / 'logs'

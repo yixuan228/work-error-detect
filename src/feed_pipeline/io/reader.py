@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from feed_pipeline.config.schema import STD_HEADER_NAME
-def read_feed_excel(file_path:str) -> pd.DataFrame:
+def read_feed_excel(file_path) -> pd.DataFrame:
     
     return (
         pd.read_excel(file_path, index_col=False, header=3)
