@@ -105,7 +105,8 @@ def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, star
 
     if save_img:
         fig.write_html(f'figure/三栋1-4单元总料量变化趋势曲线.html', include_plotlyjs='cdn', full_html=True)
-    fig.show()
+
+    return fig
 
 # 动态 单单元
 import plotly.express as px
@@ -114,15 +115,13 @@ def line_dynamic_feed_column(df, unit:str, if_partial=False, start_date=None, en
     动态单个单元 栏位级饲料总量（包含平均值）变化折线图绘制
     """ 
     if if_partial:
-        df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)].reset_index(drop=True)
+        df = df.loc[df['Date'].between(pd.to_datetime(start_date).date(), pd.to_datetime(end_date).date()), :]
 
     # 转宽表矩阵，添加Total
-    df = df.pivot(index='Date', columns='col_num', values='food_col_kg')
-    df['均值'] = df.mean(axis=1)
-    
-    # 数据转长格式用于plotly
     df = df[['Date', 'col_num', 'food_col_kg']]
-    df_long = df.melt(id_vars='Date', var_name='Column', value_name='value')
+    df_wide = df.pivot(index='Date', columns='col_num', values='food_col_kg')
+    df_wide['均值'] = df_wide.mean(axis=1)
+    df_long = df_wide.reset_index().melt(id_vars='Date', var_name='Column', value_name='value')
 
     fig = px.line(df_long, x='Date', y='value', color='Column', title=f'{unit} 28列单栏喂料量变化曲线')
     fig.update_layout(
@@ -154,6 +153,7 @@ def line_dynamic_feed_column(df, unit:str, if_partial=False, start_date=None, en
         tickformat="%m-%d", # 可选：只显示月-日
         tickfont=dict(size=10)  # 调小字体，例如10号
     )
+
+    if save_img:
+        fig.write_html(f'figure/{unit} 28列单栏喂料量变化曲线.html', include_plotlyjs='cdn', full_html=True)
     return fig
-    # fig.write_html(f'figure/{file_name}-单栏喂料量变化曲线.html', include_plotlyjs='cdn', full_html=True) if save_img else None
-    # fig.show()
