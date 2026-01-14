@@ -106,3 +106,54 @@ def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, star
     if save_img:
         fig.write_html(f'figure/三栋1-4单元总料量变化趋势曲线.html', include_plotlyjs='cdn', full_html=True)
     fig.show()
+
+# 动态 单单元
+import plotly.express as px
+def line_dynamic_feed_column(df, unit:str, if_partial=False, start_date=None, end_date=None, save_img=False):
+    """
+    动态单个单元 栏位级饲料总量（包含平均值）变化折线图绘制
+    """ 
+    if if_partial:
+        df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)].reset_index(drop=True)
+
+    # 转宽表矩阵，添加Total
+    df = df.pivot(index='Date', columns='col_num', values='food_col_kg')
+    df['均值'] = df.mean(axis=1)
+    
+    # 数据转长格式用于plotly
+    df = df[['Date', 'col_num', 'food_col_kg']]
+    df_long = df.melt(id_vars='Date', var_name='Column', value_name='value')
+
+    fig = px.line(df_long, x='Date', y='value', color='Column', title=f'{unit} 28列单栏喂料量变化曲线')
+    fig.update_layout(
+        autosize=True,       # 自动调整画布大小
+        height=500,          # 高度可以固定，也可以尝试设置为 None 自适应
+        xaxis_title='日期',
+        yaxis_title='料量/kg')
+
+    # 突出'均值'列，增加一列 alpha 或者 color
+    highlight_unit = '均值'
+    fig.update_traces(
+        selector=lambda trace: trace.name == highlight_unit,
+        line=dict(width=3, color='red'),    # 加粗
+        marker=dict(size=8),                # 增大标记点
+        opacity=1.0                         # 提高不透明度
+    )
+
+    # 设置余下列
+    fig.update_traces(
+        selector=lambda trace: trace.name != highlight_unit,
+        line=dict(width=1),
+        opacity=0.6
+    )
+
+    # 设置 x 轴按天显示，日期标签旋转 90 度
+    fig.update_xaxes(
+        dtick="D1",        # 每天一个刻度
+        tickangle=-90,      # 标签旋转90度
+        tickformat="%m-%d", # 可选：只显示月-日
+        tickfont=dict(size=10)  # 调小字体，例如10号
+    )
+    return fig
+    # fig.write_html(f'figure/{file_name}-单栏喂料量变化曲线.html', include_plotlyjs='cdn', full_html=True) if save_img else None
+    # fig.show()

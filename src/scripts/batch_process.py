@@ -1,9 +1,9 @@
-from feed_pipeline.meta.feed_file_meta import FeedFileMeta
-from feed_pipeline.io.reader import read_feed_excel
-from feed_pipeline.io.writer import save_incremental_parquet
-from feed_pipeline.processing.age import calc_relative_age
-from feed_pipeline.processing.aggregation import split_granularity
-from feed_pipeline.config.path import PATH_FEED_ORI, PATH_FEED_PROCESSED
+from meta.feed_file_meta import FeedFileMeta
+from io.reader import read_feed_excel
+from io.writer import save_incremental_parquet
+from processing.age import calc_relative_age
+from processing.aggregation import split_granularity
+from config.path import PATH_FEED_ORI, PATH_FEED_PROCESSED
 
 def process_single_file(file_name):
     print(file_name)
