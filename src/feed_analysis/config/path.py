@@ -14,3 +14,8 @@ PATH_DATA = PATH_ROOT / 'data'
 # 喂食数据目录
 PATH_FEED_ORI = PATH_DATA / 'feed_record_ori'
 PATH_FEED_PROCESSED  = PATH_DATA / 'feed_record_processed'
+
+# 绘图保存目录
+PATH_FIGURE = PATH_ROOT / 'figure'
+PATH_FIGURE_HTML = PATH_FIGURE / 'html'
+PATH_FIGURE_PNG = PATH_FIGURE / 'png'

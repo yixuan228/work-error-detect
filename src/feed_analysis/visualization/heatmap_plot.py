@@ -6,11 +6,15 @@ import numpy as np
 import pandas as pd
 def prepare_heatmap_dynamic_feed_col(df, smooth_win=1, lag=1, if_partial=False, start_date=None, end_date=None):
 
-    
     # 如果只处理部分数据
     if if_partial:
         df = df.loc[df['Date'].between(pd.to_datetime(start_date).date(), pd.to_datetime(end_date).date())].copy()
     
+    # 显示后续作图的日龄 - 时间映射表
+    date2age = {
+        d: age for d, age in zip(df['Date'], df['age'])
+    }
+
     # 转宽数据计算后续值
     df_wide = df.pivot(index='Date', columns='col_num', values='food_col_kg')
     df_wide.reset_index(inplace=True)
@@ -26,49 +30,9 @@ def prepare_heatmap_dynamic_feed_col(df, smooth_win=1, lag=1, if_partial=False, 
     df_pct_change = (df_smooth - df_smooth_lag) / df_smooth_lag * 100 # 转为百分比
     df_pct_change.index = df_wide['Date']       # 添加日期
     df_pct_change = df_pct_change[lag:]         # 剔除空行
-    df_matrix = df_pct_change.T                # 转置，每一行为每一栏，每一列是一个时间节点
+    df_matrix = df_pct_change.T                 # 转置，每一行为每一栏，每一列是一个时间节点
 
-    return df_matrix
+    return date2age, df_matrix
 
-# 2) 绘图部分
-import plotly.express as px
-def heatmap_dynamic_feed_col(df_matrix, unit='单元', color_max_range=80):
-    df_pct_plot = df_matrix.astype(float)
 
-    fig = px.imshow(
-        df_pct_plot,
-        labels=dict(x="时间", y="栏数", color="栏料量变化率%"),
-        x=df_pct_plot.columns,           # 列名作为 x 轴
-        y=df_pct_plot.index,             # 行索引作为 y 轴
-
-        color_continuous_scale='RdBu_r',
-        color_continuous_midpoint=0,       # 0 对应中间颜色（白色）
-        range_color=[-color_max_range, color_max_range],
-
-        # text_auto=True,
-        aspect="auto",
-        title=f"{unit}各栏饲料量变化率"
-
-    )
-
-    # 如果想让 y 轴从上到下显示（行1在最上面）
-    fig.update_yaxes(
-        autorange="reversed",
-        dtick = 1,
-        showgrid=False,
-        tickfont=dict(size=10)
-    )
-
-    tickvals = df_pct_plot.columns       # 每一天的位置
-    ticktext = [d.strftime("%Y-%m-%d") for d in tickvals]  # 每一天显示文本
-    
-    fig.update_xaxes(
-        tickvals=tickvals,     # 指定刻度位置（列索引）
-        ticktext=ticktext,     # 指定显示文本
-        tickformat="%Y-%m-%d",  # 年-月-日
-        tickangle=-90,            # 可选：斜显示防止重叠
-        tickfont=dict(size=10)
-    )
-    
-    return fig
 
