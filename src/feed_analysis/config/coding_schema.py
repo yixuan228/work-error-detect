@@ -6,4 +6,5 @@ STD_HEADER_NAME = {
     '栏号': "col_num",
     '单栏喂料量(Kg)': 'food_col_kg', 
     '每日采食总量(Kg)': 'food_total_kg',
+    '存栏数': 'stock_num',
 }

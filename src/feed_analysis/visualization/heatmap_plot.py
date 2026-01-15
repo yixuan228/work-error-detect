@@ -12,7 +12,7 @@ def prepare_heatmap_dynamic_feed_col(df, smooth_win=1, lag=1, if_partial=False, 
     
     # 显示后续作图的日龄 - 时间映射表
     date2age = {
-        d: age for d, age in zip(df['Date'], df['age'])
+        d: age for d, age in zip(df['Date'].values, df['age'].values)
     }
 
     # 转宽数据计算后续值
@@ -33,6 +33,59 @@ def prepare_heatmap_dynamic_feed_col(df, smooth_win=1, lag=1, if_partial=False, 
     df_matrix = df_pct_change.T                 # 转置，每一行为每一栏，每一列是一个时间节点
 
     return date2age, df_matrix
+
+# 2) 绘图部分
+import plotly.express as px
+def heatmap_dynamic_feed_col(df_matrix, date2age, unit='单元', color_max_range=80):
+    df_pct_plot = df_matrix.astype(float)
+
+    fig = px.imshow(
+        df_pct_plot,
+        labels=dict(x="时间", y="栏数", color="栏料量变化率%"),
+        x=df_pct_plot.columns,           # 列名作为 x 轴
+        y=df_pct_plot.index,             # 行索引作为 y 轴
+
+        color_continuous_scale='RdBu_r',
+        color_continuous_midpoint=0,       # 0 对应中间颜色（白色）
+        range_color=[-color_max_range, color_max_range],
+
+        # text_auto=True,
+        aspect="auto",
+        title=f"{unit}各栏饲料量变化率"
+
+    )
+
+    fig.update_traces(
+        hovertemplate=
+        "日期：%{x:%Y-%m-%d}<br>"
+        "日龄：" + "%{customdata}<br>"
+        "栏号：%{y}<br>"
+        "变化率：%{z:.2f}%<extra></extra>",
+        customdata=[
+            [date2age[d] for d in df_pct_plot.columns]
+        ] * len(df_pct_plot.index)
+    )
+
+    # 如果想让 y 轴从上到下显示（行1在最上面）
+    fig.update_yaxes(
+        autorange="reversed",
+        dtick = 1,
+        showgrid=False,
+        tickfont=dict(size=10)
+    )
+
+    tickvals = df_pct_plot.columns       # 每一天的位置
+    ticktext = [d.strftime("%Y-%m-%d") for d in tickvals]  # 每一天显示文本
+    
+    fig.update_xaxes(
+        tickvals=tickvals,     # 指定刻度位置（列索引）
+        ticktext=ticktext,     # 指定显示文本
+        tickformat="%Y-%m-%d",  # 年-月-日
+        tickangle=-90,            # 可选：斜显示防止重叠
+        tickfont=dict(size=10)
+    )
+    
+    return fig
 
 
 

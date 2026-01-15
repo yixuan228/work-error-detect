@@ -2,6 +2,8 @@ from matplotlib import font_manager
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
+
+from feed_analysis.config.path import PATH_FIGURE_PNG, PATH_FIGURE_HTML
 CN_font = font_manager.FontProperties(fname='C:/Windows/Fonts/simhei.ttf')
 
 # 静态 单个 单元饲料总量变化折线图
@@ -29,7 +31,7 @@ def line_static_feed_build(df, unit:str, if_partial=False, start_date=None, end_
     plt.xticks(rotation=90, fontproperties=CN_font, fontsize=7)
     plt.legend(prop=CN_font)
     plt.tight_layout()
-    plt.savefig(f'figure/png/{unit}-饲料总量变化.png', dpi=300, bbox_inches='tight') if save_img else None
+    plt.savefig(PATH_FIGURE_PNG/f'{unit}-饲料总量变化.png', dpi=300, bbox_inches='tight') if save_img else None
     plt.show()
 
 import pandas as pd
@@ -175,7 +177,7 @@ def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, star
     )
 
     if save_img:
-        fig.write_html(f'figure/html/三栋1-4单元总料量变化趋势曲线.html', include_plotlyjs='cdn', full_html=True)
+        fig.write_html(PATH_FIGURE_HTML / f'三栋1-4单元总料量变化趋势曲线.html', include_plotlyjs='cdn', full_html=True)
 
     return fig
 
@@ -250,5 +252,5 @@ def line_dynamic_feed_column(df, unit:str, if_partial=False, start_date=None, en
     )
 
     if save_img:
-        fig.write_html(f'figure/html/{unit} 28列单栏喂料量变化曲线.html', include_plotlyjs='cdn', full_html=True)
+        fig.write_html(PATH_FIGURE_HTML / f'{unit} 28列单栏喂料量变化曲线.html', include_plotlyjs='cdn', full_html=True)
     return fig
