@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from feed_pipeline.config.schema import STD_HEADER_NAME
+from feed_analysis.config.coding_schema import STD_HEADER_NAME
 def read_feed_excel(file_path) -> pd.DataFrame:
     
     return (

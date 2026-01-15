@@ -1,3 +1,4 @@
+# 返回不同精度等级的数据
 def split_granularity(df):
     df_col = df[['Date', 'col_num', 'food_col_kg', 'age']].drop_duplicates()
     df_col = df_col.sort_values(by=['Date', 'col_num'], ascending=[True, True])
