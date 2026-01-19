@@ -109,7 +109,68 @@ def poly_log_regression_with_smearing(
         print(f"RMSE: {rmse:.4f}")
         print(f"MAE: {mae:.4f}")
 
-    return df, model
+    return df, model, poly, scaler
+
+
+import pandas as pd
+import statsmodels.api as sm
+def predict_new_x(
+    x_new,
+    model,
+    poly,
+    scaler,
+    alpha=0.05,
+    smearing=None
+):
+    """
+    x_new: array-like or list or np.array (原始尺度)
+
+    返回：预测值 + 置信区间 + 预测区间（原始尺度）
+    """
+    x_new = np.asarray(x_new).reshape(-1, 1)
+
+    # 1. log 变换
+    x_log = np.log(x_new + 1e-6)
+    x_log_df = pd.DataFrame(
+    x_log,
+    columns=poly.feature_names_in_
+)
+
+    # 2. 多项式
+    X_poly = poly.transform(x_log_df)
+
+    # 3. 标准化
+    X_poly_scaled = scaler.transform(X_poly)
+
+    # 数值检查（这是关键）
+    if not np.isfinite(X_poly_scaled).all():
+        raise ValueError(
+            "Non-finite values in prediction design matrix "
+            "(check x_new range and log transform)"
+        )
+
+    # 4. statsmodels 设计矩阵
+    X_poly_new_sm = sm.add_constant(X_poly_scaled, has_constant='add')
+
+    # 5. 预测
+    pred = model.get_prediction(X_poly_new_sm)
+    pred_summary = pred.summary_frame(alpha=alpha)
+
+    # 6. smearing 修正（如果没传就用模型残差算）
+    if smearing is None:
+        smearing = np.mean(np.exp(model.resid))
+
+    result = pd.DataFrame({
+        "x": x_new.flatten(),
+        "y_pred": smearing * np.expm1(pred_summary["mean"]),
+        # "ci_lower": smearing * np.expm1(pred_summary["mean_ci_lower"]),
+        # "ci_upper": smearing * np.expm1(pred_summary["mean_ci_upper"]),
+        # "pred_lower": smearing * np.expm1(pred_summary["obs_ci_lower"]),
+        # "pred_upper": smearing * np.expm1(pred_summary["obs_ci_upper"]),
+    })
+    # print(result)
+    return result
+
 
 import plotly.graph_objects as go
 
