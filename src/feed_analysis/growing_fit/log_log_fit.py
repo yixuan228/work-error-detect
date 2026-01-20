@@ -11,7 +11,7 @@ import numpy as np
 import statsmodels.api as sm
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
-def poly_log_regression_with_smearing(
+def fit_poly_log_log(
     df,
     x_col="age",
     y_col="avg_food_kg",
@@ -114,7 +114,7 @@ def poly_log_regression_with_smearing(
 
 import pandas as pd
 import statsmodels.api as sm
-def predict_new_x(
+def poly_log_pred(
     x_new,
     model,
     poly,
