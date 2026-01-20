@@ -49,7 +49,7 @@ def fit_poly_log_log(
     df = df.copy()
 
     # --------------------
-    # 构造 X / y
+    # 构造 X / y；log 变换
     # --------------------
     X = df[[x_col]].copy()
     X[x_col] = np.log(X[x_col] + 1e-6)
@@ -66,10 +66,13 @@ def fit_poly_log_log(
     scaler = StandardScaler()
     X_poly_scaled = scaler.fit_transform(X_poly)
 
+    # 添加常数列
+    X_poly_sm = sm.add_constant(X_poly_scaled)
+
     # --------------------
     # statsmodels 回归
     # --------------------
-    X_poly_sm = sm.add_constant(X_poly_scaled)
+    
     model = sm.OLS(y_log, X_poly_sm).fit()
 
     # --------------------
@@ -80,20 +83,20 @@ def fit_poly_log_log(
 
     # smearing 修正
     smearing = np.mean(np.exp(model.resid))
+    
+    y_fit = smearing * np.expm1(pred_summary["mean"])
+    ci_lower = smearing * np.expm1(pred_summary["mean_ci_lower"])
+    ci_upper = smearing * np.expm1(pred_summary["mean_ci_upper"])
 
-    df["food_fit"] = smearing * np.expm1(pred_summary["mean"])
-    df["ci_lower"] = smearing * np.expm1(pred_summary["mean_ci_lower"])
-    df["ci_upper"] = smearing * np.expm1(pred_summary["mean_ci_upper"])
-
-    df["pred_lower_food"] = smearing * np.expm1(pred_summary["obs_ci_lower"])
-    df["pred_upper_food"] = smearing * np.expm1(pred_summary["obs_ci_upper"])
+    pred_lower_food = smearing * np.expm1(pred_summary["obs_ci_lower"])
+    pred_upper_food = smearing * np.expm1(pred_summary["obs_ci_upper"])
 
     # --------------------
     # 评估指标（可选）
     # --------------------
     if show_metrics:
         y_true = y.values
-        y_pred = df["food_fit"].values
+        y_pred = y_fit.values
 
         ss_res = np.sum((y_true - y_pred) ** 2)
         ss_tot = np.sum((y_true - y_true.mean()) ** 2)
@@ -109,7 +112,7 @@ def fit_poly_log_log(
         print(f"RMSE: {rmse:.4f}")
         print(f"MAE: {mae:.4f}")
 
-    return df, model, poly, scaler
+    return model, poly, scaler
 
 
 import pandas as pd
@@ -119,27 +122,31 @@ def poly_log_pred(
     model,
     poly,
     scaler,
-    alpha=0.05,
-    smearing=None
+    alpha=0.15,
+    smearing=None 
 ):
     """
     x_new: array-like or list or np.array (原始尺度)
 
     返回：预测值 + 置信区间 + 预测区间（原始尺度）
     """
-    x_new = np.asarray(x_new).reshape(-1, 1)
+    
+    # --------------------
+    # 构造 X；log 变换
+    # --------------------
 
-    # 1. log 变换
+    x_new = np.asarray(x_new).reshape(-1, 1)
     x_log = np.log(x_new + 1e-6)
     x_log_df = pd.DataFrame(
-    x_log,
-    columns=poly.feature_names_in_
-)
-
-    # 2. 多项式
+        x_log,
+        columns=poly.feature_names_in_)
+    
+    # --------------------
+    # 多项式特征
+    # --------------------
     X_poly = poly.transform(x_log_df)
 
-    # 3. 标准化
+    # 标准化
     X_poly_scaled = scaler.transform(X_poly)
 
     # 数值检查（这是关键）
@@ -149,25 +156,24 @@ def poly_log_pred(
             "(check x_new range and log transform)"
         )
 
-    # 4. statsmodels 设计矩阵
-    X_poly_new_sm = sm.add_constant(X_poly_scaled, has_constant='add')
+    # 添加常数列
+    X_poly_new_sm = sm.add_constant(X_poly_scaled)
 
-    # 5. 预测
+    # --------------------
+    # 预测 + 区间
+    # --------------------
     pred = model.get_prediction(X_poly_new_sm)
     pred_summary = pred.summary_frame(alpha=alpha)
 
-    # 6. smearing 修正（如果没传就用模型残差算）
+    # smearing 修正（如果没传就用模型残差算）
     if smearing is None:
         smearing = np.mean(np.exp(model.resid))
 
-    result = pd.DataFrame({
-        "x": x_new.flatten(),
-        "y_pred": smearing * np.expm1(pred_summary["mean"]),
-        # "ci_lower": smearing * np.expm1(pred_summary["mean_ci_lower"]),
-        # "ci_upper": smearing * np.expm1(pred_summary["mean_ci_upper"]),
-        # "pred_lower": smearing * np.expm1(pred_summary["obs_ci_lower"]),
-        # "pred_upper": smearing * np.expm1(pred_summary["obs_ci_upper"]),
-    })
+    result = smearing * np.expm1(pred_summary["mean"])
+    # "ci_lower": smearing * np.expm1(pred_summary["mean_ci_lower"]),
+    # "ci_upper": smearing * np.expm1(pred_summary["mean_ci_upper"]),
+    # "pred_lower": smearing * np.expm1(pred_summary["obs_ci_lower"]),
+    # "pred_upper": smearing * np.expm1(pred_summary["obs_ci_upper"]),
     # print(result)
     return result
 
