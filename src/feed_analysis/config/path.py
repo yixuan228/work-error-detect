@@ -15,6 +15,9 @@ PATH_DATA = PATH_ROOT / 'data'
 PATH_FEED_ORI = PATH_DATA / 'feed_record_ori'
 PATH_FEED_PROCESSED  = PATH_DATA / 'feed_record_processed'
 
+# 生长曲线拟合目录
+PATH_GROWTH = PATH_DATA / 'growth'
+
 # 绘图保存目录
 PATH_FIGURE = PATH_ROOT / 'figure'
 PATH_FIGURE_HTML = PATH_FIGURE / 'html'
