@@ -87,7 +87,7 @@ def line_dynamic_single(df, y: str, plot_title:str, color:str='red', if_partial=
 
 # 动态 多单元 饲料总量变化折线图
 import plotly.express as px
-def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, start_date=None, end_date=None, save_img=False):
+def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, start_date=None, end_date=None, age_col=False, save_img=False):
     """
     绘制多单元饲料总量变化折线图（包含均值），支持部分日期范围和导出 HTML。
     """
@@ -96,8 +96,9 @@ def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, star
     # 设置第一个表格（先根据日期和采食量去重，再设置日期为索引）
     df = df_list[0].loc[:, ['Date', 'food_total_kg']]
 
-    age_df = df_list[0].loc[:, ['Date', 'age']]     # 取日龄列
-    age_df['Date'] = pd.to_datetime(age_df['Date'])
+    if age_col:
+        age_df = df_list[0].loc[:, ['Date', 'age']]     # 取日龄列
+        age_df['Date'] = pd.to_datetime(age_df['Date'])
 
     df.set_index('Date', inplace=True)
     
@@ -120,8 +121,9 @@ def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, star
     ## ------ 数据转换部分 宽数据转长数据 ------
     df_long = df.reset_index().melt(id_vars='Date', var_name='Unit', value_name='Food Intake (Kg)')
     
-    # 在长数据后添加日龄
-    df_long['age'] = df_long['Date'].map(age_df.set_index('Date')['age'])
+    if age_col:
+        # 在长数据后添加日龄
+        df_long['age'] = df_long['Date'].map(age_df.set_index('Date')['age'])
 
     ## ------ 绘图部分 ------
     # 交互图像
@@ -130,7 +132,7 @@ def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, star
                 x='Date', y='Food Intake (Kg)', 
                 color='Unit', 
                 title=f'各单元总料量变化趋势曲线', 
-                custom_data=['age'],
+                custom_data=['age'] if age_col else None,
                 )
 
     # 突出显示均值曲线
@@ -184,7 +186,7 @@ def line_dynamic_feed_build(df_list:list, name_list:list, if_partial=False, star
 
 # 动态 单单元
 import plotly.express as px
-def line_dynamic_feed_column(df, unit:str, if_partial=False, start_date=None, end_date=None, save_img=False):
+def line_dynamic_feed_column(df, unit:str, if_partial=False, start_date=None, end_date=None, save_img=False, age_col=False):
     """
     动态单个单元 栏位级饲料总量（包含平均值）变化折线图绘制，支持部分日期范围和导出 HTML。
     """ 
