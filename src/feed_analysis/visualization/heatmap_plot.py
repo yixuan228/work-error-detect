@@ -6,14 +6,23 @@ import numpy as np
 import pandas as pd
 def prepare_heatmap_dynamic_feed_col(df, smooth_win=1, lag=1, if_partial=False, start_date=None, end_date=None):
 
+    # 处理时间保证Date列为datetime.date
+    df['Date'] = pd.to_datetime(df['Date']).dt.date
+
+    # 删除重复列
+    df = df.drop_duplicates(subset=['Date', 'col_num'], keep='first')
+
     # 如果只处理部分数据
     if if_partial:
         df = df.loc[df['Date'].between(pd.to_datetime(start_date).date(), pd.to_datetime(end_date).date())].copy()
     
     # 显示后续作图的日龄 - 时间映射表
-    date2age = {
-        d: age for d, age in zip(df['Date'].values, df['age'].values)
-    }
+    if 'age' in df.columns:
+        date2age = {
+            d: age for d, age in zip(df['Date'].values, df['age'].values)
+        }
+    else:
+        date2age = None
 
     # 转宽数据计算后续值
     df_wide = df.pivot(index='Date', columns='col_num', values='food_col_kg')
@@ -62,7 +71,7 @@ def heatmap_dynamic_feed_col(df_matrix, date2age, unit='单元', color_max_range
         "栏号：%{y}<br>"
         "变化率：%{z:.2f}%<extra></extra>",
         customdata=[
-            [date2age[d] for d in df_pct_plot.columns]
+            [date2age[d] for d in df_pct_plot.columns if date2age]
         ] * len(df_pct_plot.index)
     )
 
